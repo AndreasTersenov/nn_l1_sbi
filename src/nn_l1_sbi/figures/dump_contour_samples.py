@@ -8,7 +8,9 @@ the joint l1 arm pools its 3 compressor-seed flows. Reads the 10-D summary cache
 replots. The figure scripts read that dump from <data_root>/derived, so once it is regenerated
 either copy it into <data_root>/derived or point $NN_L1_SBI_DATA at a root that contains it.
 
-Run once on a free GPU (checked nvidia-smi). Default device 2 (foreign tenant idle), mem-capped.
+Run once on a free GPU, mem-capped. ``--cuda-visible-devices`` defaults to 0, which is what a
+scheduler that allocates you one GPU (SLURM, and most clusters) hands you; override it only when
+picking a specific card on a shared multi-GPU box.
 """
 import argparse
 from types import SimpleNamespace
@@ -59,7 +61,7 @@ FLOW = SimpleNamespace(flow_total_steps=50000, flow_batch_size=128, flow_lr_init
 
 def main():
     ap = argparse.ArgumentParser()
-    ap.add_argument("--cuda-visible-devices", default="2")
+    ap.add_argument("--cuda-visible-devices", default="0")
     ap.add_argument("--m-samples", type=int, default=20000)
     ap.add_argument("--nde-seed", type=int, default=41)
     ap.add_argument("--max-perm", type=int, default=50)

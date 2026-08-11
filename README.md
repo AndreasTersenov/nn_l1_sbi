@@ -144,7 +144,7 @@ the one that needs nothing.
 | section | what it reproduces | cost | needs |
 |---|---|---|---|
 | **A — Table 1** | all 12 arms: FoM₃ ± and the three marginals, plus the assertions against the precomputed `TABLE1_*.json` | **< 1 s, CPU** | nothing — runs from a bare checkout off `data/table1/` |
-| **B — Figures** | the paper's 12 figures, **one cell each**, in manuscript order — each invokes its generator in `src/nn_l1_sbi/figures/` and displays the preview inline. The committed outputs show **5 of the 12** (`fig:data`, `fig:l1joint`, `fig:pipeline`, `fig:cp`, `fig:fisher`); the rest state which input is missing and what produces it | **seconds to ~10 min per figure, CPU** | the Zenodo bundle at `$NN_L1_SBI_DATA`; **several figures cannot run at all — see below** |
+| **B — Figures** | the paper's 12 figures, **one cell each**, in manuscript order — each invokes its generator in `src/nn_l1_sbi/figures/` and displays the preview inline. The committed outputs show **7 of the 12** (`fig:data`, `fig:l1joint`, `fig:pipeline`, `fig:cp`, `fig:corner`, `fig:bnt`, `fig:fisher`); the rest state which input is missing and what produces it | **seconds to ~10 min per figure, CPU** | the Zenodo bundle at `$NN_L1_SBI_DATA`; **several figures cannot run at all — see below** |
 | **C — End-to-end** | retrains one VMIM compressor on the ℓ1 auto/no-BNT arm and re-runs `population_sweep.py` on it | **~1 h, 1 GPU**; skipped unless `NN_L1_SBI_GPU=1` | the raw ℓ1 caches under `$NN_L1_SBI_DATA` (`l1_datavector_cache/flat_local_none`, `fid_raw_none.npz`) |
 
 **What section C actually gates on.** Not the published 2448. The target is the **mean of the
