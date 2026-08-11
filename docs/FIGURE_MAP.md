@@ -213,10 +213,14 @@ figures at once.
   meaning: **solid = analytical / no-BNT, dashed = learned / BNT** (`fig:corner`, `fig:bnt`,
   `fig:sbc`). In `fig:bnt` the BNT ring uses the *same base hue* as its no-BNT arm, dashed rather
   than darkened, so the hue stays legible.
-* **Layout.** `fig_l1.py`, `fig_embed.py`, `fig_fisher.py` and `fig_sbc.py::plot_hist_combined`
-  turn `figure.constrained_layout.use` off and set explicit GridSpec margins, then save with the
-  default `savefig` (no tight bbox), so each PDF lands at exactly its nominal column width. Do not
-  re-enable constrained layout globally in `paper.mplstyle`.
+* **Layout.** `paper.mplstyle` sets `figure.constrained_layout.use : True` globally, and it must
+  stay on: ten generators call `plt.subplots(figsize=...)` with no layout argument and no tight
+  bbox, and `fig_cp.py` uses `fig.legend(loc="outside lower center")`, which only resolves under a
+  layout engine. The four exceptions — `fig_l1.py`, `fig_embed.py`, `fig_fisher.py` and
+  `fig_sbc.py::plot_hist_combined` — opt *out* locally (`constrained_layout=False`) and set
+  explicit GridSpec margins instead. Both paths save with the default `savefig` (no tight bbox),
+  so each PDF lands at exactly its nominal column width. Do not disable constrained layout
+  globally in `paper.mplstyle`: it would silently break the ten generators that rely on it.
 
 ---
 
