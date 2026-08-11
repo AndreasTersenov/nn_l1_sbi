@@ -221,7 +221,7 @@ Per-item recipes in `data/ZENODO_MANIFEST.md` §6.
 | `fig:ablation` | `operator_realnvp/{conv,both}/n9000/median_summary.json` | rerun the operator ladder with `inference/population_sweep.py` (GPU, ~2 h × 2). The surviving `conv_nobnt_s41` / `joint_l1_nobnt_s41` sweeps are a **different** pipeline run (2720 / 3565 vs the plotted 2671 / 3255) and are not a drop-in substitute |
 | `fig:bntwhiten`, `fig:w0` | 6 whiten/BNT campaign `median_summary.json`; `derived/geometry/<arm>/per_patch_grid.csv` | `inference/population_sweep.py` per campaign arm (GPU, ~2 h each); a per-patch geometry run (GPU, no surviving generator). Neither figure is cited by the current manuscript |
 | `fig:embed` | `derived/embed_tsne.npz` | `fig_embed --recompute` off the analysis archive — CPU, minutes |
-| `fig:l1joint`, `fig:fisher` | inputs survive, but only in the 1.99 GB analysis archive (432 MB / 2.5 GB) | a small derived slice would serve; none is cut yet |
+| `fig:l1joint`, `fig:fisher` | inputs survive, but only in the 1.99 GB analysis archive (432 MB / 1.04 GB) | a small derived slice would serve; none is cut yet |
 
 Rendered PDFs of every paper figure exist in the manuscript repository *(private until
 publication)*. Do **not** substitute `per_obs_samples.npy` for the missing contour dumps: the
