@@ -159,6 +159,23 @@ def status(verbose: bool = True) -> list:
     return figs
 
 
+def status_markdown() -> str:
+    """The same report as :func:`status`, as a Markdown table."""
+    figs = _resolved()
+    w = where()
+    n = sum(f["ready"] for f in figs)
+    out = [f"**{n} of {len(figs)}** paper figures can be drawn from the data present here.",
+           "", f"- data root: `{w['data']}`",
+           f"- figures written to: `{w['figures out']}`",
+           f"- style sheet: {'found' if w['style'].is_file() else '**missing**'}", "",
+           "| figure | paper section | inputs | what it shows |",
+           "|---|---|:--:|---|"]
+    for f in figs:
+        mark = "yes" if f["ready"] else f"**no** ({f['n_have']}/{f['n_need']})"
+        out.append(f"| `{f['label']}` | {f['sec']} | {mark} | {f['what']} |")
+    return "\n".join(out)
+
+
 def show(label: str, timeout: int = 1800):
     """Draw one paper figure and display it, or explain precisely why it cannot be drawn."""
     figs = {f["label"]: f for f in _resolved()}

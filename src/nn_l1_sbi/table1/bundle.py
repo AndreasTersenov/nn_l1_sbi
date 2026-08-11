@@ -179,6 +179,68 @@ def published_vs_retrained(rows) -> str:
     return "\n".join(out)
 
 
+def load_per_obs(arm: str = "auto_nobnt_s41") -> dict:
+    """The per-observation posterior covariances for one arm.
+
+    ``data/table1/per_obs/<arm>.npz`` ships in the repository (430 kB): the 3x3 posterior
+    covariance of (Om, s8, w0) for each of the 9000 mock observations, plus the patch and
+    noise-realisation index of each. This is one step upstream of the digests -- it is what
+    the digests were reduced *from* -- so the table can be recomputed rather than read.
+    """
+    z = np.load(bundle_dir() / "per_obs" / f"{arm}.npz")
+    return {k: z[k] for k in z.files}
+
+
+def fom3_from_cov(cov) -> np.ndarray:
+    """FoM3 = 1/sqrt(det Cov), per observation. The definition, applied directly."""
+    return 1.0 / np.sqrt(np.linalg.det(np.asarray(cov, dtype=float)))
+
+
+def block_bootstrap(values, patch, n_rep: int = 10000, seed: int = 0, chunk: int = 500):
+    """Bootstrap the median by resampling *patches*, not observations.
+
+    The 9000 mocks are 180 patches x 50 noise realisations, so they are not independent:
+    values sharing a patch share its signal realisation. Resampling observations would
+    therefore understate the error. This resamples the 180 patches with replacement, keeping
+    all 50 realisations of each, as ``docs/NOTE_FOM_ERROR_BARS.md`` specifies.
+
+    Returns ``(se, lo, hi)``: the standard deviation of the bootstrap medians and the 16th
+    and 84th percentiles.
+    """
+    values = np.asarray(values, dtype=float)
+    patch = np.asarray(patch)
+    ids = np.unique(patch)
+    counts = np.array([(patch == p).sum() for p in ids])
+    if len(set(counts)) != 1:
+        raise ValueError(f"unbalanced patches: sizes {sorted(set(counts))}")
+    # (n_patch, reps_per_patch) so a replicate is a row resample
+    grouped = np.stack([values[patch == p] for p in ids])
+    rng = np.random.default_rng(seed)
+    meds = np.empty(n_rep)
+    for i in range(0, n_rep, chunk):                       # chunked: 10^4 x 9000 at once is 720 MB
+        k = min(chunk, n_rep - i)
+        idx = rng.integers(0, len(ids), size=(k, len(ids)))
+        meds[i:i + k] = np.median(grouped[idx].reshape(k, -1), axis=1)
+    return float(meds.std(ddof=1)), float(np.percentile(meds, 16)), float(np.percentile(meds, 84))
+
+
+def table_markdown(rows) -> str:
+    """Table 1 as a Markdown table, for notebooks and anything that renders Markdown."""
+    out = ["| arm | frame | quoted | FoM₃ | σ(Ω_m) | σ(σ₈) | σ(w₀) | bias % |",
+           "|---|---|---|--:|--:|--:|--:|--:|"]
+    for r in rows:
+        star = "" if r["published"] is not None else " \\*"
+        sig = " | ".join(f"{v:.4f} ± {p:.4f}" for v, p in zip(r["sigma"], r["sigma_pm"]))
+        out.append(f"| {r['summary']} | {r['frame']} | {r['quoted']} | "
+                   f"**{r['central']:.0f} ± {r['pm']:.0f}**{star} | {sig} | {r['bias_mean']:+.1f} |")
+    out += ["", "**±** — spread over the three pre-ensemble compressor seeds, as `std/mean`, "
+                "rescaled onto the quoted central; the marginals follow the same rule.  ",
+            "**\\*** — no published value (new result); the central is the retrained one.  ",
+            "**bias %** — the single→ensemble shift, reported separately and never folded "
+            "into the ±."]
+    return "\n".join(out)
+
+
 def verify(rows, refs=None, verbose=True) -> int:
     """Check the rebuilt rows against every committed cross-check table.
 
