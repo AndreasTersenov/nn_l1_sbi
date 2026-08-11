@@ -1,0 +1,75 @@
+# --- Python ---
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+dist/
+*.egg-info/
+.eggs/
+pip-wheel-metadata/
+
+# --- Environments ---
+.venv/
+venv/
+env/
+ENV/
+.conda/
+
+# --- Jupyter ---
+.ipynb_checkpoints/
+*/.ipynb_checkpoints/*
+
+# --- JAX / TF / Torch caches ---
+.jax_cache/
+jax_cache/
+*.tfrecord
+tensorflow_datasets/
+.keras/
+
+# --- Data: everything heavy lives on Zenodo, never in git ---
+/data/zenodo/
+/data/cache/
+*.npy
+*.npz
+*.h5
+*.hdf5
+*.ckpt
+*.pkl
+*.pickle
+# ...except these tiny, load-bearing inputs, which must ship with the code:
+!scripts/slurm/inputs/centers_PAPER_180.npy
+!/data/*.npy
+!/data/*.json
+
+# --- Outputs ---
+# nn_l1_sbi.paths.output_root() defaults to $PWD/nn_l1_sbi_out, so running any
+# driver from the repo root writes its outputs inside the clone.
+/nn_l1_sbi_out/
+figures/out/
+outputs/
+results/
+*.pdf
+!docs/**/*.pdf
+slurm-*.out
+*.err
+logs/
+# crash dumps: a segfaulting worker can drop a multi-GB core file in the repo root
+core
+core.[0-9]*
+core-*
+
+# --- Editors / OS ---
+.vscode/
+.idea/
+.DS_Store
+*.swp
+*~
+
+# --- Local overrides ---
+.env
+local_paths.sh
+# machine-specific paths for scripts/slurm/env.sh; site.jean-zay.sh.example is
+# committed, the site.local.sh you copy it to is not
+site.local.sh

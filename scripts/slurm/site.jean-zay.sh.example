@@ -1,0 +1,92 @@
+# shellcheck shell=bash
+# =============================================================================
+#  site.jean-zay.sh.example — the site configuration the published numbers used
+# =============================================================================
+#
+#  This is the machine-specific half of scripts/slurm/env.sh, as it was on
+#  Jean-Zay (IDRIS), the cluster that produced every number in Table 1. It is
+#  shipped as an EXAMPLE for two reasons:
+#
+#    * provenance — these are the exact roots, module set and proxy the campaign
+#      ran against, and they document what "the same environment" means;
+#    * portability — none of them exist anywhere else, so no one should inherit
+#      them by default. env.sh's own defaults are derived from $SCRATCH / $WORK /
+#      $HOME and name no machine, project or user.
+#
+#  To use it (on Jean-Zay, or as a template elsewhere):
+#
+#      cd scripts/slurm
+#      cp site.jean-zay.sh.example site.local.sh
+#      $EDITOR site.local.sh                 # replace the paths with your own
+#
+#  env.sh sources site.local.sh (from <repo>/ or from scripts/slurm/) BEFORE it
+#  applies any default, so everything set here wins. site.local.sh is gitignored;
+#  this .example file is committed. The older name local_paths.sh is still read
+#  too, for checkouts that already have one.
+#
+#  Anything you would rather not keep in a file can equally be exported in the
+#  shell before `sbatch` — SLURM copies the submitting environment into the job.
+#
+#  Note that the #SBATCH directives (account, partition, QoS, constraint,
+#  walltime) live inside each .slurm file and are NOT set from here; SLURM parses
+#  them before any shell runs. See the header of env.sh for what each one means
+#  and what to change off-site.
+# =============================================================================
+
+# A label for the env.sh banner, so a log makes clear which site file was active.
+NN_L1_SBI_SITE="Jean-Zay (IDRIS)"
+
+# ---- writable data root ------------------------------------------------------
+# $SCRATCH on Jean-Zay: high-throughput Lustre, purged after 30 days idle. This is
+# also what env.sh's portable default resolves to when $SCRATCH is set, so the
+# line is here for explicitness rather than necessity.
+# NN_L1_SBI_DATA="$SCRATCH/nn_l1_sbi"
+
+# ---- bulk inputs -------------------------------------------------------------
+# The cross TFDS (~290 GB) holding
+# nbody_cosmogrid_dataset_tomo_cross/grid_10deg_80px_nonoverlap180 — the training
+# set. It is not rebuilt by any job in this tree.
+NN_L1_SBI_TFDS="/lustre/fsn1/projects/rech/prk/ulx34io/tensorflow_datasets"
+
+# CosmoGridV1, as an IDRIS-wide shared read-only dataset (not a personal copy).
+# Only the fiducial observation cache and the sigma tables read it.
+NN_L1_SBI_COSMOGRID="/lustre/fsmisc/dataset/CosmoGridV1"
+
+# The frozen BNT per-(channel,scale) noise-sigma table: the SNR denominator of the
+# flat-local l1 binning in the BNT frame. This is the original file the campaign
+# read, produced by the earlier flatsky-cross work, and the no-BNT twin that
+# setup/freeze_sigma.slurm rebuilds is cross-checked field by field against it.
+NN_L1_SBI_SIGMA_BNT="/lustre/fsn1/projects/rech/prk/ulx34io/cnn_sbi/scripts/sbi/results/exploratory/flatsky_cross_2026_06/flatsky_cross_noise_sigma_bnt.npz"
+
+# ---- python environment ------------------------------------------------------
+# The pinned env ("jaxili"), built by setup/build_env.slurm from
+# inputs/env_freeze.txt + inputs/constraints.txt. On $WORK, not $SCRATCH: conda
+# environments are hundreds of thousands of small files and $WORK has the inode
+# headroom.
+NN_L1_SBI_ENV="/lustre/fswork/projects/rech/nzu/ulx34io/envs/jaxili"
+# NN_L1_SBI_PYTHON defaults to $NN_L1_SBI_ENV/bin/python; set it explicitly to use
+# an interpreter that is not inside NN_L1_SBI_ENV.
+# NN_L1_SBI_PYTHON="$NN_L1_SBI_ENV/bin/python"
+
+# ---- modules -----------------------------------------------------------------
+# IDRIS module names, per NN_L1_SBI_ARCH (each job sets it before sourcing env.sh).
+# arch/a100 switches the module tree to the A100 partition (gpu_p5) — it is
+# required there and does not exist elsewhere. env.sh's portable default for all
+# three is ":" (load nothing).
+NN_L1_SBI_MODULES_GPU="module purge; module load arch/a100; module load python/3.11.5"
+NN_L1_SBI_MODULES_CPU="module purge; module load python/3.11.5"
+NN_L1_SBI_MODULES_BUILD="module purge; module load miniforge"
+
+# ---- outbound network --------------------------------------------------------
+# IDRIS compute nodes have no internet; the prepost partition reaches PyPI only
+# through this proxy. Used by setup/build_env.slurm alone (setup/install_env.slurm
+# is the offline route). Leave empty on a site with direct access.
+NN_L1_SBI_HTTP_PROXY="http://prodprox.idris.fr:3128"
+
+# ---- optional ----------------------------------------------------------------
+# The five one-off patch-centre drivers are not shipped with the package; point
+# this at the directory holding them if you have them (see setup/find_centers.slurm).
+# NN_L1_SBI_CENTERS_SRC="/path/to/centers/drivers"
+#
+# Offline wheelhouse for setup/install_env.slurm (~12 GB, disposable).
+# NN_L1_SBI_WHEELHOUSE="$NN_L1_SBI_DATA/wheelhouse"

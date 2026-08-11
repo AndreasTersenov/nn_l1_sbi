@@ -1,0 +1,123 @@
+sbi_lens: reach the tensorflow_probability JAX substrate by import, not by attribute.
+
+Target:  sbi_lens @ d239796b30027ccb12b289e4c14fd61fbdec4d61 (the commit this project pins)
+Apply:   patch -p1 from the sbi_lens *package* root, i.e. the directory containing normflow/
+
+    patch -p1 -d "$(python -c 'import sbi_lens, os; print(os.path.dirname(sbi_lens.__file__))')" \
+          < patches/sbi_lens_tfp.patch
+
+WHY
+Six modules of that commit reach the JAX substrate through an attribute of the top-level
+package:
+
+    import tensorflow_probability as tfp
+    tfp = tfp.substrates.jax                 # bijectors.py, simulator/utils.py, gen_dataset/*
+    tfp = tfp.experimental.substrates.jax    # normflow/models.py, normflow/train_model.py
+
+Neither attribute is there on tensorflow-probability 0.25.0, the version this project pins.
+`tfp.experimental.substrates` was removed in tfp >= 0.20. `tfp.substrates` is a lazily
+loaded submodule: it only becomes an attribute of `tensorflow_probability` once something
+has already imported it. So in a clean interpreter
+
+    python -c "import sbi_lens.normflow.models"
+
+dies with AttributeError on line 7 of normflow/bijectors/bijectors.py -- which models.py
+imports on its own line 6, before its own substrate line is ever reached.
+
+This patch rewrites all six lines to the supported, import-order-independent spelling
+
+    from tensorflow_probability.substrates import jax as tfp
+
+and keeps the upstream line as a comment directly above it, so the provenance stays visible.
+
+BEHAVIOUR IS UNCHANGED
+Both spellings bind the identical module object, `tensorflow_probability.substrates.jax`
+(verified with `is` under tfp 0.25.0). Nothing else in these files is touched.
+
+The patched normflow/models.py and normflow/train_model.py are byte-identical to the
+sbi_lens copy in the environment the paper's numbers were produced in. The other four files
+were left unpatched in that environment; they worked there only because this project's own
+entry points import `tensorflow_probability.substrates.jax` before they touch sbi_lens.
+Patching them removes that hidden import-order dependency without changing what any module
+binds. (simulator/utils.py and gen_dataset/* additionally need lenstools / jax-cosmo / JaxPM,
+which this project does not install -- they are patched for completeness, not because the
+reproduction imports them.)
+
+THIRD-PARTY ATTRIBUTION
+The context and removed lines below are copied from sbi_lens
+(https://github.com/DifferentiableUniverseInitiative/sbi_lens), MIT Licence,
+Copyright (c) 2023 Differentiable Universe Initiative. This patch is a derivative work of
+that source and is distributed under the same MIT terms.
+
+--- a/normflow/models.py
++++ b/normflow/models.py
+@@ -5,7 +5,8 @@
+ 
+ from sbi_lens.normflow.bijectors.bijectors import MixtureAffineSigmoidBijector
+ 
+-tfp = tfp.experimental.substrates.jax
++# tfp = tfp.experimental.substrates.jax
++from tensorflow_probability.substrates import jax as tfp
+ tfb = tfp.bijectors
+ tfd = tfp.distributions
+ 
+--- a/normflow/train_model.py
++++ b/normflow/train_model.py
+@@ -5,7 +5,8 @@
+ import optax
+ import tensorflow_probability as tfp
+ 
+-tfp = tfp.experimental.substrates.jax
++# tfp = tfp.experimental.substrates.jax
++from tensorflow_probability.substrates import jax as tfp
+ tfb = tfp.bijectors
+ tfd = tfp.distributions
+ 
+--- a/normflow/bijectors/bijectors.py
++++ b/normflow/bijectors/bijectors.py
+@@ -4,7 +4,8 @@
+ 
+ from sbi_lens.normflow.bijectors.implicit_inverse import make_inverse_fn
+ 
+-tfp = tfp.substrates.jax
++# tfp = tfp.substrates.jax
++from tensorflow_probability.substrates import jax as tfp
+ tfd = tfp.distributions
+ 
+ 
+--- a/simulator/utils.py
++++ b/simulator/utils.py
+@@ -17,7 +17,8 @@
+ 
+ from sbi_lens.simulator.redshift import subdivide
+ 
+-tfp = tfp.substrates.jax
++# tfp = tfp.substrates.jax
++from tensorflow_probability.substrates import jax as tfp
+ tfd = tfp.distributions
+ 
+ np.complex = complex
+--- a/gen_dataset/lensing_lognormal_dataset.py
++++ b/gen_dataset/lensing_lognormal_dataset.py
+@@ -12,7 +12,8 @@
+ from sbi_lens.simulator.LogNormal_field import lensingLogNormal
+ from sbi_lens.simulator.utils import get_samples_and_scores
+ 
+-tfp = tfp.substrates.jax
++# tfp = tfp.substrates.jax
++from tensorflow_probability.substrates import jax as tfp
+ tfd = tfp.distributions
+ tfb = tfp.bijectors
+ 
+--- a/gen_dataset/lensing_lpt_dataset.py
++++ b/gen_dataset/lensing_lpt_dataset.py
+@@ -10,7 +10,8 @@
+ from sbi_lens.simulator.Lpt_field import lensingLpt
+ from sbi_lens.simulator.utils import get_samples_and_scores
+ 
+-tfp = tfp.substrates.jax
++# tfp = tfp.substrates.jax
++from tensorflow_probability.substrates import jax as tfp
+ tfd = tfp.distributions
+ tfb = tfp.bijectors
+ 

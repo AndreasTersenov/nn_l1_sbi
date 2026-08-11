@@ -1,0 +1,28 @@
+# constraints.txt — the hard pins of the environment the paper's numbers were
+# produced in (python 3.11.5 venv on Jean-Zay, 2026-07-28).
+#
+# Use it on every pip transaction for this project:
+#
+#     pip install -e . -c constraints.txt
+#
+# Why a constraints file and not just the ranges in pyproject.toml: with a
+# resolver free to move, pip picks the NEWEST matching distribution for any
+# unconstrained requirement. dm-haiku's `numpy>=1.18` pulls numpy 2.x, and chex
+# 0.1.90+ drags jax 0.5.0 -> 0.10.x; either one breaks tensorflow 2.18. These
+# seven lines hold the stack at the tested point.
+#
+# Load-bearing detail: tensorflow-metadata >= 1.17 ships protobuf gencode 6.31.1
+# and breaks tfds under TF 2.18, which is why it is pinned together with
+# protobuf 5.29.3.
+#
+# Not expressible here (see pyproject.toml header and patches/README.md):
+#   * wl_stats_torch must come from git @77eafc84, NOT PyPI 0.1.0 — same version
+#     string, different code, silently different L1 datavectors.
+#   * jaxili / sbi_lens / wl_stats_torch must be installed with --no-deps.
+numpy==1.26.4
+ml-dtypes==0.4.1
+jax==0.5.0
+jaxlib==0.5.0
+tensorflow==2.18.0
+tensorflow-metadata==1.16.1
+protobuf==5.29.3

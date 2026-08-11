@@ -1,0 +1,65 @@
+# Citation metadata for nn_l1_sbi (CFF 1.2.0).
+#
+# GitHub renders this file ("Cite this repository") and Zenodo reads it when a release is
+# archived, so it must stay valid YAML *and* valid CFF.
+#
+# Deliberately incomplete: the accompanying paper has no journal, year, DOI or arXiv id yet,
+# and this repository has no Zenodo DOI yet. Those fields are LEFT OUT rather than filled
+# with placeholders, because CFF types them (`year` must be an integer, `doi` must match a
+# real DOI pattern) and a placeholder there would make the file invalid — and a plausible
+# fake identifier is worse than a missing one. The TODOs below say exactly what to add.
+#
+# TODO(before release), in this file:
+#   * top level:          `doi:` / `identifiers:` — the Zenodo DOI of the archived release
+#   * top level:          `date-released:` — the release date, as YYYY-MM-DD
+#   * preferred-citation: `journal:` — the journal, on acceptance
+#   * preferred-citation: `year:` and `volume:` / `pages:` — on publication
+#   * preferred-citation: `doi:` and/or `identifiers:` with the arXiv id — once posted
+# Keep this in sync with the BibTeX block in README.md ("Citation"), which carries the same
+# TODOs, and with .zenodo.json.
+
+cff-version: 1.2.0
+message: >-
+  If you use this software, please cite both the software itself (this file) and the paper
+  it accompanies (see `preferred-citation`).
+title: nn_l1_sbi
+abstract: >-
+  Companion code for a weak-lensing simulation-based-inference study that compares
+  wavelet (starlet) l1-norm summary statistics against learned convolutional compressors
+  on tomographic convergence maps.
+type: software
+version: 1.0.0
+license: MIT
+repository-code: https://github.com/AndreasTersenov/nn_l1_sbi
+
+authors:
+  # No ORCID is recorded here: none is known to this repository, and CFF gives no way to
+  # write an unknown one. Add `orcid: https://orcid.org/0000-0000-0000-0000` when available.
+  - given-names: Andreas
+    family-names: Tersenov
+    email: andrewtersenov@gmail.com
+
+keywords:
+  - weak gravitational lensing
+  - simulation-based inference
+  - summary statistics
+  - wavelets
+  - neural compression
+  - cosmology
+
+preferred-citation:
+  type: article
+  title: >-
+    Do we need deep learning for tomographic weak lensing? Wavelets versus neural
+    compression
+  authors:
+    - given-names: Andreas
+      family-names: Tersenov
+    - given-names: Jean-Luc
+      family-names: Starck
+    - given-names: Martin
+      family-names: Kilbinger
+  notes: >-
+    TODO — the journal, year, volume, pages, DOI and arXiv identifier of this paper are not
+    assigned yet and are deliberately absent from this record rather than guessed. Fill them
+    in here, in the BibTeX block of README.md, and in .zenodo.json once they exist.

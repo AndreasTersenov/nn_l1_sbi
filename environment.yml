@@ -1,0 +1,58 @@
+# environment.yml — reproduction environment for the NN-vs-L1 SBI paper.
+# Reference env: python 3.11.5 on Jean-Zay (IDRIS), CUDA 12.
+#
+#   conda env create -f environment.yml
+#   conda activate nn-l1-sbi
+#   pip install -e .          # or ".[gpu,notebook]" on a CUDA machine
+#
+# Deliberately trimmed (~25 lines), not a `conda env export`. Conda handles the
+# compiled leaves (healpy/cfitsio, hdf5, the BLAS stack) far better than pip on a
+# bare machine; everything JAX/TF/Torch-shaped stays on pip because the
+# conda-forge builds of those do not track the pinned versions.
+name: nn-l1-sbi
+channels:
+  - conda-forge
+dependencies:
+  - python=3.11
+  - pip>=24.0
+
+  # compiled leaves — conda builds these more reliably than pip
+  - numpy=1.26.4          # hard pin: tensorflow 2.18 requires numpy<2
+  - scipy>=1.11
+  - hdf5>=1.14
+  - h5py>=3.10
+  - healpy>=1.16          # pulls cfitsio
+  - matplotlib-base>=3.8
+  - pandas>=2.0
+  - scikit-learn>=1.3
+  - tqdm>=4.65
+  - pyyaml>=6.0
+
+  # the rest goes through pip so the pinned JAX/TF/Torch line is honoured
+  #
+  # `--constraint constraints.txt` is load-bearing, not decoration: without it
+  # this pip transaction is free to resolve numpy/jax/chex/tensorflow-metadata
+  # off the tested point (dm-haiku's `numpy>=1.18` alone pulls numpy 2.x, which
+  # breaks tensorflow 2.18), and the conda route would NOT reproduce the paper
+  # env. Both `constraints.txt` and `.` are relative paths, so run the create
+  # from the repo root:
+  #     cd <clone> && conda env create -f environment.yml
+  # If your conda/mamba build stages the pip section somewhere else and reports
+  # "Could not open requirements file: constraints.txt", make the path absolute
+  # or drop the pip section and run Route A/B by hand inside the env.
+  - pip:
+      - --constraint constraints.txt
+      - -e .
+      # For GPU instead use:  -e .[gpu]
+      #
+      # CAVEAT — this pip section is Route A (convenience), not Route B.
+      # jaxili / sbi_lens / wl_stats_torch must be installed with --no-deps
+      # (their own metadata fights this project's pins: jaxili drags in
+      # tensorflow-cpu, sbi_lens drags in lenstools). A pip requirements file
+      # cannot express a per-requirement --no-deps and neither can pyproject.toml,
+      # so this route may hit a resolver conflict on tensorflow-cpu. For the
+      # deterministic build, delete the `- -e .` line above, create the env, then
+      # run the Route B commands from the pyproject.toml header inside it.
+      #
+      # Then, after EITHER route, apply the sbi_lens tfp-substrate patch or
+      # `import sbi_lens` fails:  see patches/README.md

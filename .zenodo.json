@@ -1,0 +1,50 @@
+{
+  "upload_type": "software",
+  "title": "nn_l1_sbi: wavelet l1 versus neural compression for tomographic weak-lensing SBI",
+  "version": "1.0.0",
+  "language": "eng",
+  "access_right": "open",
+  "license": "MIT",
+  "creators": [
+    {
+      "name": "Tersenov, Andreas",
+      "affiliation": "Department of Physics, University of Crete, Greece; Institutes of Computer Science and Astrophysics, Foundation for Research and Technology Hellas (FORTH), Greece; Universite Paris-Saclay, Universite Paris Cite, CEA, CNRS, AIM, Gif-sur-Yvette, France"
+    }
+  ],
+  "description": "<p>Companion code for a weak-lensing simulation-based-inference study that compares wavelet (starlet) l1-norm summary statistics against learned convolutional compressors on tomographic convergence maps. The repository contains the summary statistics and compression code, the inference and calibration drivers, the figure generators, the SLURM campaign that produced the published numbers, and a reproduction notebook.</p><p>The Table 1 inputs (12 arms, figures of merit and their error bars) are committed in the repository under <code>data/table1/</code>, so that table reproduces with no download. The larger figure and analysis inputs are distributed as a separate Zenodo data record; see <code>data/ZENODO_MANIFEST.md</code>.</p><p>Third-party attribution is in <code>NOTICE</code>. This repository vendors no third-party source code; it redistributes one small patch file that is a derivative of sbi_lens (MIT).</p>",
+  "notes": "The accompanying paper has no journal reference, year, DOI or arXiv identifier yet, so none is recorded here rather than a placeholder being invented; the same TODO is carried in CITATION.cff and in the Citation section of README.md. Add the paper as an 'isSupplementTo' related identifier once it exists. The separate Zenodo data record described in data/ZENODO_MANIFEST.md has not been uploaded yet either, so its DOI is likewise absent.",
+  "keywords": [
+    "weak gravitational lensing",
+    "simulation-based inference",
+    "summary statistics",
+    "wavelets",
+    "neural compression",
+    "cosmology"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "https://github.com/AndreasTersenov/nn_l1_sbi",
+      "relation": "isSupplementTo",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/DifferentiableUniverseInitiative/sbi_lens",
+      "relation": "requires",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/sachaguer/jaxili",
+      "relation": "requires",
+      "scheme": "url",
+      "resource_type": "software"
+    },
+    {
+      "identifier": "https://github.com/AndreasTersenov/wl_stats_torch",
+      "relation": "requires",
+      "scheme": "url",
+      "resource_type": "software"
+    }
+  ]
+}

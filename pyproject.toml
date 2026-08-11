@@ -1,0 +1,179 @@
+# pyproject.toml — NN-vs-L1 tomographic SBI, paper reproduction release.
+#
+# Reference environment: python 3.11.5 on Jean-Zay (IDRIS), CUDA 12.
+# The version ranges below are not cosmetic: every upper bound marks a version
+# that is known to either hard-break the import graph or *silently change the
+# numbers*. `constraints.txt` carries the exact 7 hard pins of the paper env.
+#
+# ---------------------------------------------------------------------------
+# INSTALL — read this before `pip install -e .`
+# ---------------------------------------------------------------------------
+# Three of the dependencies below (jaxili, sbi-lens, wl-stats-torch) declare
+# requirement sets that fight this project:
+#   * jaxili 0.1.3 declares `jax[cuda12]` (forces CUDA on a CPU-only user) and
+#     `tensorflow-cpu` (conflicts with the `tensorflow==2.18.0` needed here),
+#     plus optuna / flowMC / jupyter / cmake, none of which this code imports.
+#   * sbi_lens declares lenstools, jax-cosmo and JaxPM — none of which this
+#     code imports, and lenstools needs a C compiler + GSL.
+# They must therefore go in with `--no-deps`. A pyproject file cannot express
+# that, so the install is a two-step recipe. Route B is what the paper env was
+# actually built with (setup/install_env.slurm) and is the deterministic one.
+#
+#   # Route A — convenience (may hit a resolver conflict on tensorflow-cpu)
+#   pip install -e . -c constraints.txt
+#
+#   # Route B — deterministic; mirrors the paper env exactly
+#   pip install --no-deps \
+#     "jaxili==0.1.3" \
+#     "wl-stats-torch @ git+https://github.com/AndreasTersenov/wl_stats_torch.git@77eafc846645f86a550dba13b177190003668900" \
+#     "sbi-lens @ git+https://github.com/DifferentiableUniverseInitiative/sbi_lens.git@d239796b30027ccb12b289e4c14fd61fbdec4d61"
+#   pip install -e . -c constraints.txt --no-deps   # this package only
+#   pip install -c constraints.txt numpy scipy matplotlib pandas h5py tqdm pyyaml \
+#     scikit-learn healpy getdist jax ml-dtypes chex flax dm-haiku optax distrax \
+#     jaxopt numpyro tensorflow tensorflow-datasets tensorflow-probability \
+#     tf-keras tensorflow-metadata protobuf torch wandb tarp
+#
+# ALWAYS, after either route (sbi_lens does not import otherwise):
+#   patch -p1 -d "$(python -c 'import sbi_lens, os; print(os.path.dirname(sbi_lens.__file__))')" \
+#         < patches/sbi_lens_tfp.patch
+# See patches/README.md.
+#
+# Note: the two direct-URL (git) requirements mean this project cannot be
+# uploaded to PyPI — PyPI rejects direct URL requirements. That is fine for a
+# GitHub release repo.
+
+[build-system]
+# setuptools>=77 is what supports the PEP 639 `license` / `license-files` pair
+# used below. pip builds in an isolated environment by default and will fetch a
+# recent setuptools itself, so this floor costs nothing on a normal install; if
+# you build with `--no-build-isolation` on an old toolchain, upgrade setuptools
+# first (`pip install -U "setuptools>=77"`).
+requires = ["setuptools>=77", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nn-l1-sbi"
+version = "1.0.0"
+description = "Neural compression vs. wavelet-L1 summary statistics for weak-lensing SBI"
+readme = "README.md"
+license = "MIT"
+license-files = ["LICENSE"]
+requires-python = ">=3.10,<3.13"
+authors = [{ name = "Andreas Tersenov", email = "andrewtersenov@gmail.com" }]
+classifiers = [
+  "Development Status :: 5 - Production/Stable",
+  "Intended Audience :: Science/Research",
+  "Natural Language :: English",
+  "Operating System :: POSIX :: Linux",
+  "Operating System :: MacOS :: MacOS X",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Topic :: Scientific/Engineering :: Astronomy",
+  "Topic :: Scientific/Engineering :: Physics",
+]
+
+dependencies = [
+  # --- core numerics -------------------------------------------------------
+  # numpy<2 is load-bearing: tensorflow 2.18 and ml-dtypes 0.4.x require it.
+  "numpy>=1.26,<2",
+  "scipy>=1.11",
+  "matplotlib>=3.8",
+  "pandas>=2.0",
+  "h5py>=3.10",
+  "tqdm>=4.65",
+  "pyyaml>=6.0",
+  "scikit-learn>=1.3",
+  "healpy>=1.16",
+  "getdist>=1.5",
+
+  # --- JAX (CPU by default; see the [gpu] extra for CUDA) ------------------
+  # jax 0.5.x is the tested line; 0.6+ moves ml-dtypes and breaks TF 2.18.
+  "jax>=0.5.0,<0.6",
+  "ml-dtypes>=0.4.1,<0.5",
+  "chex>=0.1.88,<0.2",
+  "flax>=0.10",
+  "dm-haiku>=0.0.13",
+  "optax>=0.2.4",
+  "distrax>=0.1.5",
+  "jaxopt>=0.8",
+  "numpyro>=0.15",
+
+  # --- TensorFlow (dataset I/O via TFDS, tfp substrates for sbi_lens) ------
+  "tensorflow>=2.18,<2.19",
+  "tensorflow-datasets>=4.9.7,<4.10",
+  "tensorflow-probability>=0.25,<0.26",
+  "tf-keras>=2.18,<2.19",           # tfp>=0.25 needs it on TF>=2.16
+  "tensorflow-metadata>=1.16,<1.17", # >=1.17 ships protobuf gencode 6.31 -> breaks tfds
+  "protobuf>=5.29.3,<6",             # paired with the line above
+
+  # --- Torch (wavelet L1 / peak-count backend) -----------------------------
+  "torch>=2.0",
+
+  # --- experiment logging (hard top-level import in the training drivers) --
+  "wandb>=0.16",
+
+  # --- posterior-calibration gate (TARP-DRP) -------------------------------
+  # NOT optional: `import tarp` is a module-level import in the shipped
+  # nn_l1_sbi.inference.run_tarp_coverage (gate C) and nn_l1_sbi.figures.fig_tarp
+  # (fig:tarp, fig:tarp_bnt), so a plain install must carry it. Pure Python,
+  # its only runtime requirement is numpy.
+  "tarp>=0.1",
+
+  # --- project-specific ----------------------------------------------------
+  # NOTE: all three of these must be installed with `--no-deps` — their own
+  # declared requirements conflict with the pins above. See the header.
+  #
+  # jaxili: PyPI 0.1.3 verified byte-identical to the git tree used for the paper.
+  "jaxili==0.1.3",
+  # wl-stats-torch: MUST come from git at commit 77eafc84. *** DO NOT relax this
+  # to `wl-stats-torch==0.1.0` from PyPI. *** The PyPI 0.1.0 release carries the
+  # SAME version string but different code: it is missing subtract_coarse_mean()
+  # and half of statistics.py. It does not error — the wavelet transform silently
+  # takes a different code path and the L1 datavectors change.
+  "wl-stats-torch @ git+https://github.com/AndreasTersenov/wl_stats_torch.git@77eafc846645f86a550dba13b177190003668900",
+  # sbi_lens: not on PyPI. Needs the tfp-substrate patch, see patches/sbi_lens_tfp.patch.
+  "sbi-lens @ git+https://github.com/DifferentiableUniverseInitiative/sbi_lens.git@d239796b30027ccb12b289e4c14fd61fbdec4d61",
+]
+
+[project.optional-dependencies]
+# Everything needed to open and execute the reproduction notebook end to end.
+notebook = [
+  "jupyterlab>=4.0",
+  "ipykernel>=6.25",
+  "ipywidgets>=8.0",
+  "nbformat>=5.9",
+  "nbconvert>=7.0",
+]
+
+# CUDA 12 build of JAX. This is the only GPU-specific requirement: it pulls the
+# nvidia-* wheels that TensorFlow and Torch then also find on the library path.
+gpu = [
+  "jax[cuda12]>=0.5.0,<0.6",
+]
+
+dev = [
+  "pytest>=7.0",
+  "pytest-cov>=3.0",
+  "black>=22.0",
+  "isort>=5.10",
+  "ruff>=0.1",
+]
+
+[project.urls]
+Repository = "https://github.com/AndreasTersenov/nn_l1_sbi"
+Paper = "https://github.com/AndreasTersenov/L1_vs_CNN_Tomographic_SBI"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+# The shipped artefacts (data/, docs/, notebooks/, scripts/) live OUTSIDE the
+# package, so they need no package-data rules — they are repo files, not
+# importable resources. The only non-.py files inside src/ are the two below,
+# which the figure code reads from its installed location: the matplotlib style
+# sheet loaded by nn_l1_sbi.figures.style, and the contour helper the figure
+# scripts shell out to. Without this block they are dropped from a NON-editable
+# install (`pip install .`) and only an editable install happens to work.
+[tool.setuptools.package-data]
+"nn_l1_sbi.figures" = ["*.mplstyle", "*.sh"]

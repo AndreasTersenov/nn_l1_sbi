@@ -1,0 +1,111 @@
+# paper.mplstyle -- house style for the Tersenov et al. (2026) figure set.
+#
+# Loaded by nn_l1_sbi.figures.style.use_style(), which every fig_*.py calls
+# before it draws anything. It is the ONLY place global rcParams are set: the
+# figure scripts set figsize (style.WIDTH_SINGLE / WIDTH_INTER / WIDTH_DOUBLE)
+# and per-arm colour/marker (style.ARMS) explicitly, and otherwise inherit
+# from here.
+#
+# Provenance: authored to match the design already documented in this
+# repository -- the module docstring of style.py and docs/FIGURE_MAP.md, which
+# specify the A&A conventions this figure set follows: single column 88 mm,
+# double column 180 mm, serif text with STIX math, 9 pt axis labels and 8 pt
+# tick/legend type at printed size, ticks inward on all four sides with minor
+# ticks on, vector PDF with embedded fonts, and the Okabe-Ito colour-blind-safe
+# palette paired with per-arm markers so the figures survive grayscale print.
+# Where a choice was not fixed by those documents it follows the A&A author
+# guidelines; the two places where the obvious default is deliberately NOT
+# taken are commented as DEVIATION below.
+#
+# Sanity check:
+#   python -c "import matplotlib.pyplot as plt; plt.style.use('paper.mplstyle')"
+
+# ---- fonts -----------------------------------------------------------
+# Serif body text to match the A&A text face; STIX for math. DejaVu Serif is
+# first so the figures build identically on a machine with no extra fonts
+# installed (it ships with matplotlib).
+font.family         : serif
+font.serif          : DejaVu Serif, Times New Roman, Times, STIXGeneral
+mathtext.fontset    : stix
+font.size           : 9
+
+# Mathtext, never a TeX installation: the release must render on a bare
+# matplotlib without latex/dvipng.
+text.usetex         : False
+
+# axes.titlesize is only a fallback for stray panel labels -- a journal figure
+# carries its description in the caption, not in an in-axes set_title.
+axes.titlesize      : 9
+axes.labelsize      : 9
+xtick.labelsize     : 8
+ytick.labelsize     : 8
+legend.fontsize     : 8
+figure.titlesize    : 9
+
+# ---- figure ----------------------------------------------------------
+# Fallback only: every generator passes figsize explicitly, because the PDF
+# must land at exactly its printed column width and never be scaled by LaTeX.
+figure.figsize      : 3.465, 2.6
+figure.dpi          : 150
+savefig.dpi         : 300
+
+# On by default: most generators call plt.subplots() with no layout argument
+# and save with the plain (non-tight) bbox, so the layout engine is what keeps
+# labels inside the nominal canvas. The four scripts that need hand-set
+# margins (fig_l1, fig_embed, fig_fisher, fig_sbc.plot_hist_combined) turn it
+# off locally and pass constrained_layout=False.
+figure.constrained_layout.use : True
+
+# ---- axes ------------------------------------------------------------
+axes.linewidth      : 0.8
+axes.grid           : False
+axes.prop_cycle     : cycler('color', ['0072B2', 'D55E00', '009E73', 'CC79A7', 'E69F00', '56B4E9', 'F0E442', '000000'])
+# ^ Wong / Okabe-Ito colour-blind-safe 8-colour set, and the source of the
+#   fixed per-arm colours in style.ARMS. A&A print is grayscale, so colour is
+#   always paired with a marker (and distinct luminance); see style.ARMS.
+
+# ---- lines & markers -------------------------------------------------
+lines.linewidth     : 1.2
+lines.markersize    : 4
+lines.markeredgewidth : 0.8
+
+errorbar.capsize    : 2
+
+# ---- ticks (inward, all four sides, minor ticks on) ------------------
+xtick.direction     : in
+ytick.direction     : in
+xtick.top           : True
+ytick.right         : True
+xtick.minor.visible : True
+ytick.minor.visible : True
+xtick.major.size    : 4
+ytick.major.size    : 4
+xtick.minor.size    : 2
+ytick.minor.size    : 2
+xtick.major.width   : 0.8
+ytick.major.width   : 0.8
+xtick.minor.width   : 0.6
+ytick.minor.width   : 0.6
+
+# ---- legend ----------------------------------------------------------
+legend.frameon      : False
+legend.handlelength : 1.6
+legend.borderaxespad : 0.4
+
+# ---- saving (vector, embedded fonts) ---------------------------------
+# fonttype 42 embeds TrueType outlines rather than shipping Type-3 subsets,
+# which A&A requires and which keeps the text selectable in the PDF.
+pdf.fonttype        : 42
+ps.fonttype         : 42
+
+# DEVIATION 1: bbox is 'standard', not the 'tight' that a figure style would
+# usually set. A tight bbox crops to the drawn ink, so the saved PDF would no
+# longer be exactly 88/120/180 mm wide and LaTeX would rescale it. Width
+# fidelity wins; constrained layout above is what keeps nothing clipped.
+savefig.bbox        : standard
+# Consulted only if a caller asks for bbox_inches="tight" explicitly.
+savefig.pad_inches  : 0.02
+
+# DEVIATION 2: savefig.format is left at matplotlib's default. Every
+# generator passes a filename with an explicit .pdf/.png suffix, so this
+# rcParam is never consulted; pinning it would only hide a missing suffix.
