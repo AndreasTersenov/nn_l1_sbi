@@ -94,12 +94,33 @@ def plot_joint_cellmap():
     print("wrote", out)
 
 
-def main():
+def main(panel="both"):
+    """Draw panel (a), panel (b), or both.
+
+    The two panels are two separate figures in the paper -- fig:l1
+    (``fig_l1_hist_vs_s8.pdf``) and fig:l1joint (``fig_l1_joint_cellmap.pdf``), both in
+    the statistics section. They are drawn by one script because they share the styling.
+
+    ``--panel`` exists because panel (a)'s level cache has no surviving generator: with
+    ``both`` (the default, and the historical behaviour) a missing cache aborts the script
+    before panel (b) is reached, even though panel (b)'s input is present. ``--panel b``
+    draws the joint cell map on its own.
+    """
     ensure_output_dir("figures")    # create HERE on use, not as an import side effect
-    plot_hist_grid()
-    plot_joint_cellmap()
+    if panel in ("a", "both"):
+        plot_hist_grid()
+    if panel in ("b", "both"):
+        plot_joint_cellmap()
 
 
 if __name__ == "__main__":
+    import argparse
+
+    ap = argparse.ArgumentParser(description=__doc__,
+                                 formatter_class=argparse.RawDescriptionHelpFormatter)
+    ap.add_argument("--panel", choices=("a", "b", "both"), default="both",
+                    help="a = fig:l1 histogram grid, b = fig:l1joint cell map, "
+                         "both = the default and historical behaviour")
+    args = ap.parse_args()
     (HERE / "_preview").mkdir(parents=True, exist_ok=True)
-    main()
+    main(args.panel)
