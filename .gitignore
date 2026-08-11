@@ -42,6 +42,10 @@ tensorflow_datasets/
 !scripts/slurm/inputs/centers_PAPER_180.npy
 !/data/*.npy
 !/data/*.json
+# the per-observation posterior covariances the notebook recomputes Table 1 from
+# (430 kB). Without this the notebook's A.4/A.5 cells fail on a fresh clone.
+!/data/table1/per_obs/
+!/data/table1/per_obs/*.npz
 
 # --- Outputs ---
 # nn_l1_sbi.paths.output_root() defaults to $PWD/nn_l1_sbi_out, so running any
